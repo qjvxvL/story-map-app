@@ -12,9 +12,7 @@ API Keys:
 - OpenStreetMap: Tidak memerlukan API key (free tile layer)
 - Leaflet Map Library: Open source, tidak memerlukan API key
 
-Nama: [Nama Anda]
-Email: [Email Anda]
-ID Dicoding: [ID Dicoding Anda]
+
 
 URL Deployment: https://qjvxvL.github.io/story-map-app/
 Repository GitHub: https://github.com/qjvxvL/story-map-app
