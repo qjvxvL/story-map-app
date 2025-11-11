@@ -1,0 +1,308 @@
+/* ===== TABLET (768px) ===== */
+@media screen and (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+
+  /* Navbar */
+  .navbar-container {
+    padding: 1rem;
+  }
+
+  .navbar-brand h1 {
+    font-size: 1.5rem;
+  }
+
+  .navbar-menu {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background-color: white;
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    gap: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .navbar-menu.active {
+    max-height: 400px;
+  }
+
+  .navbar-menu li {
+    width: 100%;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .navbar-menu li:last-child {
+    border-bottom: none;
+  }
+
+  .nav-link,
+  .btn-logout {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 1rem;
+  }
+
+  .navbar-toggle {
+    display: flex;
+  }
+
+  /* Home Page */
+  .home-content {
+    grid-template-columns: 1fr;
+  }
+
+  .map-container,
+  .location-map,
+  .detail-map {
+    height: 400px;
+  }
+
+  .stories-list {
+    max-height: 500px;
+  }
+
+  /* Story Item */
+  .story-item {
+    flex-direction: column;
+  }
+
+  .story-image {
+    width: 100%;
+    height: 200px;
+  }
+
+  /* Auth Pages */
+  .auth-container {
+    padding: 2rem;
+  }
+
+  .auth-header h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Add Story */
+  .add-story-container {
+    padding: 1.5rem;
+  }
+
+  .add-story-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .photo-options {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .location-info {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  /* Detail Page */
+  .detail-content {
+    padding: 1.5rem;
+  }
+
+  .detail-name {
+    font-size: 1.5rem;
+  }
+
+  .detail-image {
+    max-height: 300px;
+  }
+
+  /* Filter */
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+}
+
+/* ===== MOBILE (375px) ===== */
+@media screen and (max-width: 375px) {
+  /* Typography */
+  .home-header h2 {
+    font-size: 1.8rem;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+  }
+
+  /* Navbar */
+  .navbar-brand h1 {
+    font-size: 1.3rem;
+  }
+
+  /* Auth Pages */
+  .auth-container {
+    padding: 1.5rem;
+  }
+
+  .auth-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .form-input,
+  .form-textarea,
+  .btn {
+    font-size: 0.9rem;
+  }
+
+  /* Story Item */
+  .story-image {
+    height: 150px;
+  }
+
+  .story-name {
+    font-size: 1rem;
+  }
+
+  .story-description {
+    font-size: 0.9rem;
+  }
+
+  /* Add Story */
+  .add-story-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .camera-video,
+  .camera-canvas {
+    max-height: 250px;
+  }
+
+  .photo-preview {
+    max-width: 100%;
+  }
+
+  /* Detail Page */
+  .detail-name {
+    font-size: 1.3rem;
+  }
+
+  .detail-content {
+    padding: 1rem;
+  }
+
+  /* Map */
+  .map-container,
+  .location-map,
+  .detail-map {
+    height: 300px;
+  }
+
+  /* Buttons */
+  .btn,
+  .btn-back,
+  .btn-logout {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .camera-controls {
+    gap: 0.5rem;
+  }
+
+  .camera-controls button {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ===== DESKTOP (1024px and above) ===== */
+@media screen and (min-width: 1024px) {
+  .home-content {
+    gap: 3rem;
+  }
+
+  .stories-section,
+  .map-section {
+    padding: 2rem;
+  }
+
+  .map-container {
+    height: 800px;
+  }
+
+  .stories-list {
+    max-height: 800px;
+  }
+
+  .add-story-container {
+    padding: 3rem;
+  }
+
+  .detail-content {
+    padding: 3rem;
+  }
+
+  /* Hover effects only on desktop */
+  .story-item:hover {
+    transform: translateY(-4px);
+  }
+
+  .btn:hover,
+  .btn-back:hover,
+  .nav-link:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .navbar,
+  .footer,
+  .filter-container,
+  .form-actions,
+  .btn-back,
+  .camera-controls {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  .main-content {
+    padding: 0;
+  }
+
+  .detail-content,
+  .add-story-container,
+  .auth-container {
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .skip-link:focus {
+    transition: none;
+  }
+}

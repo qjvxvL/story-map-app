@@ -1,0 +1,30 @@
+APP_URL=<url_aplikasi>
+MAP_SERVICE_API_KEY=<api_key>
+
+Nama: [Nama Anda]
+Email: [Email Anda]
+ID Dicoding: [ID Dicoding Anda]
+
+URL Deployment: [URL hasil deployment]
+Repository GitHub: [URL GitHub repository]
+
+API Keys:
+- OpenStreetMap: Tidak memerlukan API key (free tile layer)
+- Leaflet Map Library: Open source, tidak memerlukan API key
+
+Catatan:
+- Aplikasi menggunakan Leaflet untuk peta digital
+- Menggunakan OpenStreetMap sebagai tile layer (tidak memerlukan API key)
+- Tile layer alternatif: OpenTopoMap
+- Story API dari Dicoding tidak memerlukan API key tambahan
+
+Catatan Tambahan:
+- Aplikasi telah diimplementasi dengan arsitektur MVP
+- Menggunakan View Transitions API untuk transisi halaman
+- Implementasi Push Notification dengan enable/disable toggle
+- PWA dengan dukungan offline dan installable
+- IndexedDB untuk fitur favorit dengan filter, sort, dan search
+- Background sync untuk posting cerita saat offline
+- Responsive design untuk mobile (375px), tablet (768px), dan desktop (1024px)
+- Aksesibilitas: semantic HTML, ARIA labels, keyboard navigation
+- Multiple tile layers pada peta (OpenStreetMap & OpenTopoMap)
