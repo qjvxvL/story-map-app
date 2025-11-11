@@ -13,7 +13,6 @@ API Keys:
 - Leaflet Map Library: Open source, tidak memerlukan API key
 
 
-
 URL Deployment: https://qjvxvL.github.io/story-map-app/
 Repository GitHub: https://github.com/qjvxvL/story-map-app
 
