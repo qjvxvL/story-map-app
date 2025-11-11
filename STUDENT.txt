@@ -1,8 +1,8 @@
 APP_URL=<url_aplikasi>
 MAP_SERVICE_API_KEY=<api_key>
 
-Nama: [Nama Anda]
-Email: [Email Anda]
+Nama: Dwiki Yulian
+Email: dwikiyulian58@gmail.com
 ID Dicoding: [ID Dicoding Anda]
 
 URL Deployment: [URL hasil deployment]
