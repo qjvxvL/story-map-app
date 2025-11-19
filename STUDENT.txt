@@ -1,9 +1,7 @@
-Nama: [Nama Lengkap Anda]
-Email: [Email Anda]
-ID Dicoding: [ID Dicoding Anda]
+Nama: Dwiki Yulian
+Email: dwiki.yulian@binus.ac.id
 
-URL Deployment: https://[username].github.io/story-map-app/
-Repository GitHub: https://github.com/[username]/story-map-app
+URL Deployment: https://fancy-crisp-daf99c.netlify.app/
 
 API Keys:
 - OpenStreetMap: Tidak memerlukan API key (free tile layer)
@@ -71,4 +69,3 @@ API Keys:
 ✓ Online/Offline Detection
 ✓ Service Worker Auto Update
 
-TOTAL SCORE: 20/20 pts (MAKSIMAL)
