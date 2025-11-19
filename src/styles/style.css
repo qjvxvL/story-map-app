@@ -148,33 +148,47 @@ body {
 
 /* ===== MAIN CONTENT ===== */
 .main-content {
-  flex: 1;
-  max-width: 1400px;
-  margin: 0 auto;
+  min-height: calc(100vh - var(--navbar-height) - var(--footer-height));
+  padding: 0;
+  margin: 0;
+  background: var(--background);
   width: 100%;
-  padding: 2rem;
 }
 
 .page-content {
-  min-height: 500px;
+  width: 100%;
+  min-height: calc(100vh - var(--navbar-height) - var(--footer-height));
 }
 
 /* ===== AUTH PAGES ===== */
 .auth-section {
+  min-height: calc(100vh - 140px);
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 70vh;
-  padding: 2rem;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .auth-container {
-  background: white;
-  padding: 3rem;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 450px;
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .auth-header {
@@ -183,13 +197,15 @@ body {
 }
 
 .auth-header h2 {
-  color: var(--primary-color);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
-  font-size: 2rem;
 }
 
 .auth-header p {
-  color: var(--secondary-color);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
 }
 
 .auth-form {
@@ -205,115 +221,114 @@ body {
 }
 
 .form-label {
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
 }
 
-.form-input,
-.form-textarea {
-  padding: 0.75rem;
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius);
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  transition: var(--transition);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.3s ease;
   font-family: inherit;
 }
 
-.form-input:focus,
-.form-textarea:focus {
+.form-input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.form-input[aria-invalid="true"],
-.form-textarea[aria-invalid="true"] {
-  border-color: var(--danger-color);
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input[aria-invalid="true"] {
+  border-color: var(--error-color);
+  background-color: #fff5f5;
 }
 
 .error-message {
-  color: var(--danger-color);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  color: var(--error-color);
   margin-top: 0.25rem;
+  min-height: 1.2rem;
   display: block;
 }
 
 .error-box {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  background-color: #fee;
+  border: 1px solid var(--error-color);
+  border-radius: 8px;
+  color: var(--error-color);
+  font-size: 0.9rem;
   display: none;
 }
 
-.success-message {
-  color: var(--success-color);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+.error-box:not(:empty) {
+  display: block;
 }
 
-.success-box {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
-  padding: 1rem;
-  border-radius: var(--border-radius);
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: var(--border-radius);
+.auth-form .btn {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
-  transition: var(--transition);
-  text-align: center;
-}
-
-.btn:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
+  transition: all 0.3s ease;
+  border: none;
+  margin-top: 0.5rem;
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #0056b3);
   color: white;
 }
 
-.btn-primary:hover,
-.btn-primary:focus {
-  background-color: var(--primary-hover);
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3, var(--primary-color));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
 }
 
-.btn-secondary {
-  background-color: var(--secondary-color);
-  color: white;
+.btn-primary:active {
+  transform: translateY(0);
 }
 
-.btn-secondary:hover,
-.btn-secondary:focus {
-  background-color: var(--secondary-hover);
+.btn-primary:disabled {
+  background: var(--border-color);
+  cursor: not-allowed;
+  transform: none;
 }
 
 .auth-footer {
   text-align: center;
   margin-top: 1.5rem;
-  color: var(--secondary-color);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.auth-footer p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .auth-link {
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
-  transition: var(--transition);
+  transition: color 0.3s ease;
 }
 
-.auth-link:hover,
-.auth-link:focus {
+.auth-link:hover {
+  color: #0056b3;
   text-decoration: underline;
-  outline: 2px solid transparent;
 }
 
 /* ===== HOME PAGE ===== */
@@ -1182,4 +1197,213 @@ select:focus {
 
 .notification-active {
   animation: pulse-notification 2s ease-in-out infinite;
+}
+
+/* ============================================
+   NOTIFICATION TOGGLE STYLES
+   ============================================ */
+
+.nav-settings {
+  display: flex;
+  align-items: center;
+  margin: 0 0.5rem;
+}
+
+.notification-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--card-background);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.notification-btn:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.notification-btn.active {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-color: #28a745;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.notification-btn.active:hover {
+  background: linear-gradient(135deg, #20c997, #28a745);
+}
+
+.notification-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.notification-icon {
+  font-size: 1.2rem;
+  animation: ring 3s ease-in-out infinite;
+}
+
+.notification-btn.active .notification-icon {
+  animation: ring-active 1.5s ease-in-out infinite;
+}
+
+.notification-status {
+  font-weight: 600;
+  color: var(--secondary-color);
+  transition: color 0.3s ease;
+}
+
+.notification-btn.active .notification-status {
+  color: white;
+}
+
+.notification-btn:hover .notification-status {
+  color: white;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+  }
+}
+
+@keyframes ring {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10%,
+  30% {
+    transform: rotate(-10deg);
+  }
+  20%,
+  40% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes ring-active {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-15deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(-15deg) scale(1.1);
+  }
+}
+
+/* Leaflet Layer Control Styling */
+.leaflet-control-layers {
+  background: white !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border: 2px solid #007bff !important;
+}
+
+.leaflet-control-layers-expanded {
+  padding: 16px !important;
+}
+
+.leaflet-control-layers-list {
+  margin-top: 8px;
+}
+
+.leaflet-control-layers label {
+  display: flex;
+  align-items: center;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.leaflet-control-layers label:hover {
+  background: #f0f8ff;
+  transform: translateX(4px);
+}
+
+.leaflet-control-layers-base label input[type="radio"] {
+  margin-right: 8px;
+  accent-color: #007bff;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .nav-settings {
+    margin: 0 0.25rem;
+  }
+
+  .notification-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .notification-status {
+    display: none;
+  }
+
+  .notification-icon {
+    font-size: 1.4rem;
+  }
+}
+
+/* Responsive Auth */
+@media screen and (max-width: 480px) {
+  .auth-container {
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+  }
+
+  .auth-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .form-input {
+    padding: 0.65rem 0.875rem;
+  }
+}
+
+/* Color Variables (jika belum ada) */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+
+  --background: #f8f9fa;
+  --card-background: #ffffff;
+  --border-color: #dee2e6;
+
+  --navbar-height: 60px;
+  --footer-height: 60px;
 }

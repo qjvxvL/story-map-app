@@ -202,3 +202,140 @@ html {
     scroll-behavior: auto !important;
   }
 }
+
+/* Custom View Transitions */
+@view-transition {
+  navigation: auto;
+}
+
+/* Default slide transitions */
+::view-transition-old(root) {
+  animation: slide-out-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-new(root) {
+  animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Auth pages - Fade transition */
+.auth-section {
+  view-transition-name: auth-content;
+}
+
+::view-transition-old(auth-content) {
+  animation: fade-out 0.2s ease-out;
+}
+
+::view-transition-new(auth-content) {
+  animation: fade-in 0.3s ease-in;
+}
+
+/* Detail page - Scale transition */
+.detail-section {
+  view-transition-name: detail-content;
+}
+
+::view-transition-old(detail-content) {
+  animation: scale-down 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-new(detail-content) {
+  animation: scale-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Story cards - Individual transitions */
+.story-item {
+  view-transition-name: var(--story-id);
+}
+
+/* Keyframe animations */
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-down {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes scale-up {
+  from {
+    transform: scale(1.05);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(auth-content),
+  ::view-transition-new(auth-content),
+  ::view-transition-old(detail-content),
+  ::view-transition-new(detail-content) {
+    animation: none !important;
+  }
+}

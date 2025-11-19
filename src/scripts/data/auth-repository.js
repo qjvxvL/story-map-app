@@ -24,6 +24,10 @@ class AuthRepository {
   static isAuthenticated() {
     return !!this.getToken();
   }
+
+  static isLoggedIn() {
+    return this.isAuthenticated();
+  }
 }
 
 export default AuthRepository;

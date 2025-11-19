@@ -1,9 +1,11 @@
 import StoryApi from "../api/story-api.js";
 import AuthRepository from "../data/auth-repository.js";
 import CameraHelper from "../utils/camera-helper.js";
+import KeyboardHelper from "../utils/keyboard-helper.js"; // ✅ TAMBAHKAN INI
 import Loading from "../views/components/loading.js";
 import CONFIG from "../config/config.js";
 import DBHelper from "../utils/db-helper.js";
+import NotificationHelper from "../utils/notification-helper.js";
 
 class AddStoryPresenter {
   constructor() {
@@ -20,6 +22,7 @@ class AddStoryPresenter {
     this._form = document.querySelector("#add-story-form");
     await this._initMap();
     this._attachEventListeners();
+    KeyboardHelper.enableKeyboardNavigation(); // ✅ Ini sekarang bisa dipanggil
   }
 
   async _initMap() {
@@ -67,8 +70,7 @@ class AddStoryPresenter {
   _attachEventListeners() {
     // Form submission
     this._form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      await this._handleSubmit();
+      await this._handleSubmit(e); // ✅ Pass event e
     });
 
     // Photo method selection
@@ -143,19 +145,24 @@ class AddStoryPresenter {
 
     if (!file) return;
 
-    // Validate file
-    if (!file.type.match("image.*")) {
-      alert("File harus berupa gambar");
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      document.querySelector("#photo-error").textContent =
+        "Format file harus JPG, JPEG, atau PNG";
       e.target.value = "";
       return;
     }
 
-    if (file.size > 1024 * 1024) {
-      alert("Ukuran file maksimal 1MB");
+    // Validate file size (max 1MB)
+    if (file.size > 1000000) {
+      document.querySelector("#photo-error").textContent =
+        "Ukuran file maksimal 1MB";
       e.target.value = "";
       return;
     }
 
+    // Save to instance variable
     this._photoFile = file;
 
     // Show preview
@@ -169,7 +176,6 @@ class AddStoryPresenter {
     };
     reader.readAsDataURL(file);
 
-    // Clear error
     document.querySelector("#photo-error").textContent = "";
   }
 
@@ -247,112 +253,155 @@ class AddStoryPresenter {
     this._photoFile = null;
   }
 
-  async _handleSubmit() {
-    // Clear previous messages
-    const errorContainer = document.querySelector("#form-error");
-    const successContainer = document.querySelector("#form-success");
-
-    errorContainer.textContent = "";
-    errorContainer.style.display = "none";
-    successContainer.textContent = "";
-    successContainer.classList.add("hidden");
-
-    // Validate form
-    const description = document.querySelector("#description").value.trim();
-
-    if (!description) {
-      document.querySelector("#description-error").textContent =
-        "Deskripsi tidak boleh kosong";
-      return;
-    }
-
-    if (!this._photoFile) {
-      document.querySelector("#photo-error").textContent = "Foto harus dipilih";
-      return;
-    }
+  async _handleSubmit(e) {
+    e.preventDefault();
+    Loading.show();
 
     try {
-      Loading.show();
+      const description = document.querySelector("#description").value.trim();
+      const photo =
+        this._photoFile || document.querySelector("#photo").files[0];
+      const lat = this._selectedLocation?.lat;
+      const lon = this._selectedLocation?.lon;
 
-      const token = AuthRepository.getToken();
+      // Validation
+      if (!description) {
+        throw new Error("Deskripsi wajib diisi");
+      }
 
-      const storyData = {
-        description,
-        photo: this._photoFile,
-      };
+      if (!photo) {
+        throw new Error("Foto wajib dipilih");
+      }
 
-      // Add location if selected
-      if (this._selectedLocation) {
-        storyData.lat = this._selectedLocation.lat;
-        storyData.lon = this._selectedLocation.lon;
+      if (photo.size > 1000000) {
+        throw new Error("Ukuran foto maksimal 1MB");
+      }
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append("description", description);
+      formData.append("photo", photo);
+
+      if (lat && lon) {
+        formData.append("lat", lat);
+        formData.append("lon", lon);
       }
 
       // Check if online
-      if (navigator.onLine) {
-        // Online: send directly to API
-        const response = await StoryApi.addStory(token, storyData);
-
-        if (response.error === false) {
-          successContainer.textContent = "Cerita berhasil diposting!";
-          successContainer.classList.remove("hidden");
-
-          // Reset form
-          this._form.reset();
-          this._handleRemovePhoto();
-          this._cameraHelper.stopCamera();
-
-          setTimeout(() => {
-            window.location.hash = "#/home";
-          }, 2000);
-        } else {
-          throw new Error(response.message || "Gagal memposting cerita");
-        }
-      } else {
-        // Offline: save to IndexedDB for background sync
-        await this._saveOfflineStory(storyData, token);
-
-        successContainer.textContent =
-          "Anda sedang offline. Cerita akan diposting otomatis saat online.";
-        successContainer.classList.remove("hidden");
-
-        // Reset form
-        this._form.reset();
-        this._handleRemovePhoto();
-        this._cameraHelper.stopCamera();
+      if (!navigator.onLine) {
+        // Save to IndexedDB for background sync
+        const token = AuthRepository.getToken();
+        await DBHelper.addPendingStory(
+          {
+            description,
+            photo,
+            lat,
+            lon,
+            formData,
+          },
+          token
+        );
 
         // Register sync
-        if ("serviceWorker" in navigator && "sync" in self.registration) {
+        if ("serviceWorker" in navigator && "SyncManager" in window) {
           const registration = await navigator.serviceWorker.ready;
           await registration.sync.register("sync-stories");
+          console.log("Background sync registered");
         }
 
-        setTimeout(() => {
-          window.location.hash = "#/home";
-        }, 2000);
+        Loading.hide();
+        alert(
+          "Anda sedang offline. Story akan dikirim otomatis saat online kembali."
+        );
+        window.location.hash = "#/home";
+        return;
+      }
+
+      // If online, send directly
+      const token = AuthRepository.getToken();
+      const response = await StoryApi.addStory(token, {
+        // ✅ Token dulu, object kedua
+        description,
+        photo,
+        lat,
+        lon,
+      });
+
+      if (!response.error) {
+        Loading.hide();
+
+        // Show notification
+        NotificationHelper.showLocalNotification(
+          "Story Berhasil Ditambahkan!",
+          description.substring(0, 50) + "...",
+          {
+            icon: URL.createObjectURL(photo),
+          }
+        );
+
+        // Trigger sync for any pending stories
+        this._syncPendingStories();
+
+        alert("Story berhasil ditambahkan!");
+        window.location.hash = "#/home";
+      } else {
+        throw new Error(response.message || "Gagal menambahkan story");
       }
     } catch (error) {
-      errorContainer.textContent =
-        error.message ||
-        "Terjadi kesalahan saat memposting cerita. Silakan coba lagi.";
-      errorContainer.style.display = "block";
-      errorContainer.focus();
-    } finally {
       Loading.hide();
+      console.error("Error adding story:", error);
+
+      const errorBox = document.querySelector("#form-error");
+      if (errorBox) {
+        errorBox.textContent =
+          error.message || "Terjadi kesalahan saat menambahkan story";
+        errorBox.style.display = "block";
+      } else {
+        alert(error.message || "Terjadi kesalahan saat menambahkan story");
+      }
     }
   }
 
-  async _saveOfflineStory(storyData, token) {
-    const pendingStory = {
-      description: storyData.description,
-      photo: storyData.photo,
-      lat: storyData.lat || null,
-      lon: storyData.lon || null,
-      token: token,
-      createdAt: new Date().toISOString(),
-    };
+  async _syncPendingStories() {
+    try {
+      const pendingStories = await DBHelper.getAllPendingStories();
 
-    await DBHelper.addPendingStory(pendingStory);
-    console.log("Story saved for background sync");
+      if (pendingStories.length === 0) {
+        return;
+      }
+
+      console.log("Syncing pending stories:", pendingStories.length);
+
+      for (const story of pendingStories) {
+        try {
+          const formData = new FormData();
+          formData.append("description", story.description);
+          formData.append("photo", story.photo);
+
+          if (story.lat && story.lon) {
+            formData.append("lat", story.lat);
+            formData.append("lon", story.lon);
+          }
+
+          const response = await fetch(`${CONFIG.BASE_URL}/stories`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${story.token}`,
+            },
+            body: formData,
+          });
+
+          if (response.ok) {
+            await DBHelper.removePendingStory(story.id);
+            console.log("Pending story synced:", story.id);
+          }
+        } catch (error) {
+          console.error("Error syncing story:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error in sync pending stories:", error);
+    }
   }
 }
 

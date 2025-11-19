@@ -3,6 +3,8 @@ import AuthRepository from "../data/auth-repository.js";
 import DBHelper from "../utils/db-helper.js";
 import Loading from "../views/components/loading.js";
 import CONFIG from "../config/config.js";
+import UrlParser from "../routes/url-parser.js";
+import KeyboardHelper from "../utils/keyboard-helper.js"; // ✅ ADD
 
 class DetailPresenter {
   constructor(storyId) {
@@ -13,6 +15,7 @@ class DetailPresenter {
   }
 
   async init() {
+    console.log("🔍 Loading story detail for ID:", this._storyId);
     await this._loadStoryDetail();
     await this._checkFavoriteStatus();
   }
@@ -20,22 +23,72 @@ class DetailPresenter {
   async _loadStoryDetail() {
     try {
       Loading.show();
-
       const token = AuthRepository.getToken();
+
+      console.log("📡 Fetching story from API...");
+      console.log("🆔 Story ID to fetch:", this._storyId);
+      console.log("🆔 Story ID length:", this._storyId?.length);
+      console.log("🆔 Story ID type:", typeof this._storyId);
+      console.log(
+        "🔗 Full API URL:",
+        `${CONFIG.BASE_URL}/stories/${this._storyId}`
+      );
+
       const response = await StoryApi.getStoryDetail(token, this._storyId);
 
-      if (response.error === false) {
+      if (!response.error) {
         this._story = response.story;
+        console.log("✅ Story loaded:", this._story);
         this._renderStoryDetail();
 
+        // Initialize map if location exists
         if (this._story.lat && this._story.lon) {
           await this._initMap();
         }
+      } else {
+        throw new Error(response.message || "Gagal memuat detail cerita");
       }
     } catch (error) {
-      console.error("Error loading story detail:", error);
-      alert("Gagal memuat detail cerita.");
-      window.location.hash = "#/home";
+      console.error("❌ Error loading story detail:", error);
+      console.error("❌ Story ID was:", this._storyId);
+      console.error(
+        "❌ API URL was:",
+        `${CONFIG.BASE_URL}/stories/${this._storyId}`
+      );
+
+      const detailContainer = document.querySelector("#story-detail");
+      if (detailContainer) {
+        detailContainer.innerHTML = `
+          <div class="error-message" style="
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            margin: 2rem;
+          ">
+            <h2 style="color: #dc3545;">Error</h2>
+            <p style="color: #6c757d; margin: 1rem 0;">${error.message}</p>
+            <p style="color: #999; font-size: 0.85rem; margin-top: 1rem;">
+              Story ID: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 4px;">${this._storyId}</code>
+            </p>
+            <p style="color: #999; font-size: 0.85rem;">
+              API URL: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 4px; word-break: break-all;">
+                ${CONFIG.BASE_URL}/stories/${this._storyId}
+              </code>
+            </p>
+            <a href="#/home" class="btn btn-primary" style="
+              display: inline-block;
+              margin-top: 1.5rem;
+              padding: 0.75rem 1.5rem;
+              background: #007bff;
+              color: white;
+              text-decoration: none;
+              border-radius: 8px;
+              font-weight: 600;
+            ">Kembali ke Home</a>
+          </div>
+        `;
+      }
     } finally {
       Loading.hide();
     }

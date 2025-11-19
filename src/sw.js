@@ -86,34 +86,67 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// Push Notification
+// Push Notification dengan dynamic content
 self.addEventListener("push", (event) => {
   console.log("[Service Worker] Push received");
 
   let notificationData = {
-    title: "Story Map",
-    body: "You have a new notification",
+    title: "Story Map - New Story",
+    body: "Someone just shared a new story!",
     icon: "/icons/icon-192x192.png",
     badge: "/icons/icon-96x96.png",
     data: {
       url: "/",
+      storyId: null,
     },
+    actions: [
+      {
+        action: "view",
+        title: "Lihat Story",
+        icon: "/icons/icon-96x96.png",
+      },
+      {
+        action: "close",
+        title: "Tutup",
+      },
+    ],
+    vibrate: [200, 100, 200],
+    tag: "story-notification",
+    requireInteraction: false,
   };
 
   if (event.data) {
     try {
       const dataJson = event.data.json();
+      console.log("[Service Worker] Push data:", dataJson);
+
       notificationData = {
-        title: dataJson.title || notificationData.title,
-        body: dataJson.options?.body || notificationData.body,
-        icon: dataJson.options?.icon || notificationData.icon,
-        badge: dataJson.options?.badge || notificationData.badge,
+        title: dataJson.title || "Story Map - New Story",
+        body: dataJson.body || dataJson.message || "Check out this new story!",
+        icon: dataJson.icon || "/icons/icon-192x192.png",
+        badge: dataJson.badge || "/icons/icon-96x96.png",
+        image: dataJson.image || null,
         data: {
-          url: dataJson.options?.data?.url || notificationData.data.url,
+          url: dataJson.url || "/",
+          storyId: dataJson.storyId || null,
         },
+        actions: [
+          {
+            action: "view",
+            title: "Lihat Story",
+            icon: "/icons/icon-96x96.png",
+          },
+          {
+            action: "close",
+            title: "Tutup",
+          },
+        ],
+        vibrate: [200, 100, 200],
+        tag: "story-notification",
+        requireInteraction: false,
       };
     } catch (error) {
-      console.error("Error parsing push data:", error);
+      console.error("[Service Worker] Error parsing push data:", error);
     }
   }
 
@@ -122,36 +155,58 @@ self.addEventListener("push", (event) => {
       body: notificationData.body,
       icon: notificationData.icon,
       badge: notificationData.badge,
+      image: notificationData.image,
       data: notificationData.data,
-      actions: [
-        {
-          action: "view",
-          title: "Lihat Detail",
-        },
-        {
-          action: "close",
-          title: "Tutup",
-        },
-      ],
+      actions: notificationData.actions,
+      vibrate: notificationData.vibrate,
+      tag: notificationData.tag,
+      requireInteraction: notificationData.requireInteraction,
     })
   );
 });
 
-// Notification Click
+// Notification Click dengan navigasi ke detail
 self.addEventListener("notificationclick", (event) => {
-  console.log("[Service Worker] Notification clicked");
+  console.log("[Service Worker] Notification clicked:", event);
 
   event.notification.close();
 
-  if (event.action === "view") {
-    event.waitUntil(clients.openWindow(event.notification.data.url || "/"));
-  } else if (event.action === "close") {
-    // Just close the notification
+  if (event.action === "close") {
     return;
-  } else {
-    // Default action
-    event.waitUntil(clients.openWindow(event.notification.data.url || "/"));
   }
+
+  const urlToOpen = event.notification.data.url || "/";
+  const storyId = event.notification.data.storyId;
+
+  const promiseChain = clients
+    .matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    })
+    .then((windowClients) => {
+      // Check if window already open
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          return client.focus().then((client) => {
+            // Navigate to story detail if storyId exists
+            if (storyId) {
+              return client.navigate(`/#/detail/${storyId}`);
+            }
+            return client.navigate(urlToOpen);
+          });
+        }
+      }
+
+      // Open new window
+      const fullUrl = storyId
+        ? `${self.location.origin}/#/detail/${storyId}`
+        : `${self.location.origin}${urlToOpen}`;
+
+      return clients.openWindow(fullUrl);
+    });
+
+  event.waitUntil(promiseChain);
 });
 
 // Background Sync

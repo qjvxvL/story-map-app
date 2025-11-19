@@ -1,6 +1,7 @@
 import DBHelper from "../utils/db-helper.js";
 import StoryItem from "../views/components/story-item.js";
 import Loading from "../views/components/loading.js";
+import KeyboardHelper from "../utils/keyboard-helper.js"; // ✅ ADD
 
 class FavoritesPresenter {
   constructor() {

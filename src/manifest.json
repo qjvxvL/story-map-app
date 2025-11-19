@@ -1,12 +1,13 @@
 {
-  "name": "Story Map - Dicoding Stories",
+  "name": "Story Map Application - Dicoding Stories",
   "short_name": "Story Map",
-  "description": "Aplikasi berbagi cerita dengan peta digital yang interaktif",
+  "description": "Share and explore stories on an interactive map with friends",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#007bff",
   "orientation": "portrait-primary",
+  "scope": "/",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -62,43 +63,75 @@
       "src": "/screenshots/home-mobile.png",
       "sizes": "540x720",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "Home page with story list and interactive map"
+    },
+    {
+      "src": "/screenshots/add-story-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Add new story with camera and location picker"
+    },
+    {
+      "src": "/screenshots/favorites-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Favorite stories with filter and search"
     },
     {
       "src": "/screenshots/home-desktop.png",
       "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "Desktop view with multiple tile layers and markers"
     }
   ],
   "shortcuts": [
     {
-      "name": "Tambah Cerita",
+      "name": "Add New Story",
       "short_name": "Add Story",
-      "description": "Buat cerita baru",
-      "url": "/#/add-story",
+      "description": "Quickly add a new story",
+      "url": "/#/add",
       "icons": [
         {
           "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     },
     {
-      "name": "Favorit",
+      "name": "My Favorites",
       "short_name": "Favorites",
-      "description": "Lihat cerita favorit",
+      "description": "View your favorite stories",
       "url": "/#/favorites",
       "icons": [
         {
           "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Browse Stories",
+      "short_name": "Browse",
+      "description": "Explore all stories on map",
+      "url": "/#/home",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }
   ],
-  "categories": ["social", "lifestyle", "travel"],
-  "dir": "ltr",
+  "categories": ["social", "travel", "lifestyle", "photo"],
+  "prefer_related_applications": false,
+  "related_applications": [],
   "lang": "id",
-  "scope": "/"
+  "dir": "ltr"
 }
