@@ -124,7 +124,7 @@ class LoginPresenter {
         AuthRepository.setToken(response.loginResult.token);
         AuthRepository.setUser({
           userId: response.loginResult.userId,
-          name: response.loginResult.name,
+          name: response.loginResult.name, // ✅ Already saving name
         });
 
         // Redirect to home

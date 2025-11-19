@@ -35,12 +35,10 @@ module.exports = {
           to: path.resolve(__dirname, "dist/"),
         },
         {
+          // ✅ CRITICAL FIX: Copy sw.js to dist root
           from: path.resolve(__dirname, "src/sw.js"),
           to: path.resolve(__dirname, "dist/sw.js"),
-        },
-        {
-          from: path.resolve(__dirname, "src/manifest.json"),
-          to: path.resolve(__dirname, "dist/manifest.json"),
+          to: path.resolve(__dirname, "dist/service-worker.js"),
         },
       ],
     }),

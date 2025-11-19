@@ -3,11 +3,13 @@ import AuthRepository from "../data/auth-repository.js";
 import DBHelper from "../utils/db-helper.js";
 import Loading from "../views/components/loading.js";
 import CONFIG from "../config/config.js";
-import UrlParser from "../routes/url-parser.js";
-import KeyboardHelper from "../utils/keyboard-helper.js"; // ✅ ADD
 
 class DetailPresenter {
   constructor(storyId) {
+    console.log("🏗️ DetailPresenter constructor called");
+    console.log("  - storyId parameter received:", storyId);
+
+    // Store whatever was passed (even if undefined)
     this._storyId = storyId;
     this._story = null;
     this._map = null;
@@ -15,7 +17,69 @@ class DetailPresenter {
   }
 
   async init() {
-    console.log("🔍 Loading story detail for ID:", this._storyId);
+    // ✅ CRITICAL FIX: Parse URL SETIAP KALI di init()
+    console.log("🔍 DetailPresenter init() called");
+    console.log("  - this._storyId from constructor:", this._storyId);
+
+    // SELALU parse dari URL untuk ensure correctness
+    const hash = window.location.hash.slice(1); // Remove #
+    console.log("  - Full hash:", hash);
+
+    const parts = hash.split("/");
+    console.log("  - URL parts:", parts);
+
+    // Extract story ID from URL (parts[2])
+    const urlStoryId = parts[2];
+    console.log("  - Story ID from URL (parts[2]):", urlStoryId);
+
+    // Use URL story ID (more reliable)
+    if (urlStoryId && urlStoryId !== "undefined" && urlStoryId !== "") {
+      this._storyId = urlStoryId;
+      console.log("✅ Using story ID from URL:", this._storyId);
+    } else {
+      console.error("❌ No valid story ID found in URL!");
+      console.error("❌ Hash:", hash);
+      console.error("❌ Parts:", parts);
+
+      // Show error immediately
+      const detailContainer = document.querySelector("#story-detail");
+      if (detailContainer) {
+        detailContainer.innerHTML = `
+          <div class="error-message" style="
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            margin: 2rem;
+          ">
+            <h2 style="color: #dc3545;">Error</h2>
+            <p style="color: #6c757d; margin: 1rem 0;">
+              Story ID tidak valid atau tidak ditemukan di URL
+            </p>
+            <p style="color: #999; font-size: 0.85rem; margin-top: 1rem;">
+              URL: <code style="background: #f5f5f5; padding: 0.25rem 0.5rem; border-radius: 4px;">${hash}</code>
+            </p>
+            <a href="#/home" class="btn btn-primary" style="
+              display: inline-block;
+              margin-top: 1.5rem;
+              padding: 0.75rem 1.5rem;
+              background: #007bff;
+              color: white;
+              text-decoration: none;
+              border-radius: 8px;
+              font-weight: 600;
+            ">Kembali ke Home</a>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    console.log("📦 Final story ID for loading:", this._storyId);
+    console.log("📦 Story ID type:", typeof this._storyId);
+    console.log("📦 Story ID length:", this._storyId?.length);
+
+    // Now load story with valid ID
     await this._loadStoryDetail();
     await this._checkFavoriteStatus();
   }
@@ -209,29 +273,47 @@ class DetailPresenter {
   async _initMap() {
     const mapElement = document.querySelector("#detail-map");
 
-    if (!mapElement) return;
+    if (!mapElement) {
+      console.warn("Map element not found");
+      return;
+    }
 
-    // Initialize Leaflet map
-    this._map = L.map("detail-map").setView(
-      [this._story.lat, this._story.lon],
-      15
-    );
+    // Wait for element to be fully rendered
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Add tile layer
-    L.tileLayer(CONFIG.TILE_LAYERS.openStreetMap.url, {
-      attribution: CONFIG.TILE_LAYERS.openStreetMap.attribution,
-      maxZoom: CONFIG.MAP_CONFIG.MAX_ZOOM,
-      minZoom: CONFIG.MAP_CONFIG.MIN_ZOOM,
-    }).addTo(this._map);
+    try {
+      // Initialize Leaflet map
+      this._map = L.map("detail-map").setView(
+        [this._story.lat, this._story.lon],
+        15
+      );
 
-    // Add marker
-    L.marker([this._story.lat, this._story.lon])
-      .addTo(this._map)
-      .bindPopup(`<b>${this._story.name}</b>`)
-      .openPopup();
+      // Add tile layer
+      L.tileLayer(CONFIG.TILE_LAYERS.openStreetMap.url, {
+        attribution: CONFIG.TILE_LAYERS.openStreetMap.attribution,
+        maxZoom: CONFIG.MAP_CONFIG.MAX_ZOOM,
+        minZoom: CONFIG.MAP_CONFIG.MIN_ZOOM,
+      }).addTo(this._map);
+
+      // Add marker
+      L.marker([this._story.lat, this._story.lon])
+        .addTo(this._map)
+        .bindPopup(`<b>${this._story.name}</b>`)
+        .openPopup();
+
+      // Force map resize after render
+      setTimeout(() => {
+        if (this._map) {
+          this._map.invalidateSize();
+        }
+      }, 300);
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
   }
 
   _formatDate(dateString) {
+    const date = new Date(dateString);
     const options = {
       year: "numeric",
       month: "long",
@@ -239,7 +321,7 @@ class DetailPresenter {
       hour: "2-digit",
       minute: "2-digit",
     };
-    return new Date(dateString).toLocaleDateString("id-ID", options);
+    return date.toLocaleDateString("id-ID", options);
   }
 }
 

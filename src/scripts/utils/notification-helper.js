@@ -47,27 +47,33 @@ class NotificationHelper {
   static async subscribeToPushNotifications() {
     try {
       const registration = await navigator.serviceWorker.ready;
-      console.log("Service Worker ready:", registration);
+      console.log("✅ Service Worker ready:", registration);
 
       let subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
+        console.log("📝 Creating new push subscription...");
+
+        const convertedVapidKey = this.urlBase64ToUint8Array(
+          CONFIG.PUSH_NOTIFICATION.PUBLIC_VAPID_KEY
+        );
+
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: this.urlBase64ToUint8Array(
-            CONFIG.PUSH_NOTIFICATION.PUBLIC_VAPID_KEY
-          ),
+          applicationServerKey: convertedVapidKey,
         });
 
-        console.log("New push subscription:", subscription);
-        await this.sendSubscriptionToServer(subscription);
+        console.log("✅ New push subscription created:", subscription);
       } else {
-        console.log("Already subscribed:", subscription);
+        console.log("✅ Already have subscription:", subscription);
       }
+
+      // ✅ CRITICAL FIX: Send subscription to backend
+      await this.sendSubscriptionToServer(subscription);
 
       return subscription;
     } catch (error) {
-      console.error("Error subscribing to push:", error);
+      console.error("❌ Error subscribing to push:", error);
       throw error;
     }
   }
@@ -78,8 +84,13 @@ class NotificationHelper {
       const subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
+        // ✅ Unsubscribe from backend first
+        await this.removeSubscriptionFromServer(subscription);
+
+        // Then unsubscribe from browser
         await subscription.unsubscribe();
-        console.log("Unsubscribed from push notifications");
+        console.log("✅ Unsubscribed from push notifications");
+
         this.showLocalNotification(
           "Notifikasi Dinonaktifkan",
           "Anda tidak akan menerima notifikasi lagi"
@@ -89,14 +100,97 @@ class NotificationHelper {
 
       return false;
     } catch (error) {
-      console.error("Error unsubscribing:", error);
+      console.error("❌ Error unsubscribing:", error);
       return false;
     }
   }
 
+  // ✅ CRITICAL FIX: Implement backend subscription
   static async sendSubscriptionToServer(subscription) {
-    console.log("Subscription to send to server:", subscription);
-    // Optional: send to your backend if you have one
+    try {
+      console.log("📤 Sending subscription to backend...");
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No auth token, skip backend subscription");
+        return;
+      }
+
+      const response = await fetch(
+        `${CONFIG.BASE_URL}/notifications/subscribe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: btoa(
+                String.fromCharCode.apply(
+                  null,
+                  new Uint8Array(subscription.getKey("p256dh"))
+                )
+              ),
+              auth: btoa(
+                String.fromCharCode.apply(
+                  null,
+                  new Uint8Array(subscription.getKey("auth"))
+                )
+              ),
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        console.log("✅ Subscription sent to backend successfully");
+        localStorage.setItem("pushSubscribed", "true");
+      } else {
+        const error = await response.json();
+        console.error("❌ Backend subscription failed:", error);
+      }
+    } catch (error) {
+      console.error("❌ Error sending subscription to backend:", error);
+      // Don't throw - subscription still works locally
+    }
+  }
+
+  // ✅ NEW: Remove subscription from backend
+  static async removeSubscriptionFromServer(subscription) {
+    try {
+      console.log("📤 Removing subscription from backend...");
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ No auth token, skip backend removal");
+        return;
+      }
+
+      const response = await fetch(
+        `${CONFIG.BASE_URL}/notifications/subscribe`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        console.log("✅ Subscription removed from backend successfully");
+        localStorage.setItem("pushSubscribed", "false");
+      } else {
+        console.error("❌ Backend removal failed");
+      }
+    } catch (error) {
+      console.error("❌ Error removing subscription from backend:", error);
+    }
   }
 
   static showLocalNotification(title, body, options = {}) {
@@ -144,7 +238,6 @@ class NotificationHelper {
     for (let i = 0; i < rawData.length; ++i) {
       outputArray[i] = rawData.charCodeAt(i);
     }
-
     return outputArray;
   }
 }

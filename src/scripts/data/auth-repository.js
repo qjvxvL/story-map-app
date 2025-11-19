@@ -16,6 +16,17 @@ class AuthRepository {
     return user ? JSON.parse(user) : null;
   }
 
+  // ✅ ADD: getUsername method
+  static getUsername() {
+    const user = this.getUser();
+    return user ? user.name : null;
+  }
+
+  // ✅ ADD: logout method (alias for clearAuth)
+  static logout() {
+    this.clearAuth();
+  }
+
   static clearAuth() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

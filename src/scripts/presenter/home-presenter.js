@@ -40,6 +40,13 @@ class HomePresenter {
 
     baseLayers["OpenStreetMap"].addTo(this._map);
     L.control.layers(baseLayers).addTo(this._map);
+
+    // ✅ FIX: Force map to recalculate size after DOM render
+    setTimeout(() => {
+      if (this._map) {
+        this._map.invalidateSize();
+      }
+    }, 300);
   }
 
   async _loadStories() {

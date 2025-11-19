@@ -35,7 +35,8 @@ const routes = {
   },
   "/detail/:id": {
     page: new DetailPage(),
-    presenter: DetailPresenter, // ✅ Will be initialized with storyId in app.js
+    presenter: DetailPresenter,
+    needsStoryId: true, // ✅ ADD FLAG
   },
   "/favorites": {
     page: new FavoritesPage(),

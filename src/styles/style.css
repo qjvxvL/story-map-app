@@ -1407,3 +1407,100 @@ select:focus {
   --navbar-height: 60px;
   --footer-height: 60px;
 }
+
+/* ===== INSTALL BANNER ===== */
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.install-banner-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.install-banner-content p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.install-banner-content button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.install-banner-content .btn-primary {
+  background: white;
+  color: #667eea;
+}
+
+.install-banner-content .btn-primary:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.install-banner-content .btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.install-banner-content .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .install-banner-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .install-banner-content button {
+    width: 100%;
+  }
+}
+
+/* Notification Toggle Active State */
+.notification-toggle.active {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-weight: 600;
+}
+
+.notification-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

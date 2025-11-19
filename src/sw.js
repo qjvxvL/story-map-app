@@ -1,13 +1,15 @@
 const CACHE_NAME = "story-map-v1";
 const DATA_CACHE_NAME = "story-map-data-v1";
 
+// ✅ FIX: Update URLs for production
 const urlsToCache = [
   "/",
   "/index.html",
   "/app.bundle.js",
-  "/styles.css",
-  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
-  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+  "/manifest.json",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+  // Leaflet external resources (cached separately)
 ];
 
 // Install Service Worker
@@ -17,7 +19,12 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("[Service Worker] Caching app shell");
-      return cache.addAll(urlsToCache);
+      // ✅ Cache dengan error handling
+      return cache.addAll(urlsToCache).catch((error) => {
+        console.error("[Service Worker] Cache failed for:", error);
+        // Don't fail install if some resources are missing
+        return Promise.resolve();
+      });
     })
   );
 
@@ -33,7 +40,7 @@ self.addEventListener("activate", (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
-            console.log("[Service Worker] Removing old cache:", cacheName);
+            console.log("[Service Worker] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -41,186 +48,135 @@ self.addEventListener("activate", (event) => {
     })
   );
 
-  return self.clients.claim();
+  self.clients.claim();
 });
 
-// Fetch Event - Network First for API, Cache First for Static Assets
+// Fetch Event - Network First for API, Cache First for static
 self.addEventListener("fetch", (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
+  // ✅ Skip chrome-extension and non-http requests
+  if (
+    event.request.url.startsWith("chrome-extension://") ||
+    !event.request.url.startsWith("http")
+  ) {
+    return;
+  }
 
-  // API Requests - Network First with Cache Fallback
-  if (url.origin === "https://story-api.dicoding.dev") {
+  const requestUrl = new URL(event.request.url);
+
+  // API requests - Network First
+  if (requestUrl.origin === "https://story-api.dicoding.dev") {
     event.respondWith(
       caches.open(DATA_CACHE_NAME).then((cache) => {
-        return fetch(request)
+        return fetch(event.request)
           .then((response) => {
-            // Save successful GET requests to cache
-            if (request.method === "GET" && response.status === 200) {
-              cache.put(request, response.clone());
+            // Cache successful API responses
+            if (response.status === 200) {
+              cache.put(event.request, response.clone());
             }
             return response;
           })
           .catch(() => {
-            // If network fails, return cached data
-            return cache.match(request);
+            // Return cached data if offline
+            return cache.match(event.request);
           });
       })
     );
     return;
   }
 
-  // Static Assets - Cache First
+  // Leaflet tiles - Cache with expiration
+  if (
+    requestUrl.hostname.includes("tile.openstreetmap.org") ||
+    requestUrl.hostname.includes("tile.opentopomap.org")
+  ) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((response) => {
+          return (
+            response ||
+            fetch(event.request).then((networkResponse) => {
+              cache.put(event.request, networkResponse.clone());
+              return networkResponse;
+            })
+          );
+        });
+      })
+    );
+    return;
+  }
+
+  // Static assets - Cache First
   event.respondWith(
-    caches.match(request).then((response) => {
+    caches.match(event.request).then((response) => {
       return (
         response ||
-        fetch(request).then((fetchResponse) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, fetchResponse.clone());
-            return fetchResponse;
-          });
+        fetch(event.request).catch(() => {
+          // Return offline page for navigation requests
+          if (event.request.mode === "navigate") {
+            return caches.match("/index.html");
+          }
         })
       );
     })
   );
 });
 
-// Push Notification dengan dynamic content
-self.addEventListener("push", (event) => {
-  console.log("[Service Worker] Push received");
-
-  let notificationData = {
-    title: "Story Map - New Story",
-    body: "Someone just shared a new story!",
-    icon: "/icons/icon-192x192.png",
-    badge: "/icons/icon-96x96.png",
-    data: {
-      url: "/",
-      storyId: null,
-    },
-    actions: [
-      {
-        action: "view",
-        title: "Lihat Story",
-        icon: "/icons/icon-96x96.png",
-      },
-      {
-        action: "close",
-        title: "Tutup",
-      },
-    ],
-    vibrate: [200, 100, 200],
-    tag: "story-notification",
-    requireInteraction: false,
-  };
-
-  if (event.data) {
-    try {
-      const dataJson = event.data.json();
-      console.log("[Service Worker] Push data:", dataJson);
-
-      notificationData = {
-        title: dataJson.title || "Story Map - New Story",
-        body: dataJson.body || dataJson.message || "Check out this new story!",
-        icon: dataJson.icon || "/icons/icon-192x192.png",
-        badge: dataJson.badge || "/icons/icon-96x96.png",
-        image: dataJson.image || null,
-        data: {
-          url: dataJson.url || "/",
-          storyId: dataJson.storyId || null,
-        },
-        actions: [
-          {
-            action: "view",
-            title: "Lihat Story",
-            icon: "/icons/icon-96x96.png",
-          },
-          {
-            action: "close",
-            title: "Tutup",
-          },
-        ],
-        vibrate: [200, 100, 200],
-        tag: "story-notification",
-        requireInteraction: false,
-      };
-    } catch (error) {
-      console.error("[Service Worker] Error parsing push data:", error);
-    }
-  }
-
-  event.waitUntil(
-    self.registration.showNotification(notificationData.title, {
-      body: notificationData.body,
-      icon: notificationData.icon,
-      badge: notificationData.badge,
-      image: notificationData.image,
-      data: notificationData.data,
-      actions: notificationData.actions,
-      vibrate: notificationData.vibrate,
-      tag: notificationData.tag,
-      requireInteraction: notificationData.requireInteraction,
-    })
-  );
-});
-
-// Notification Click dengan navigasi ke detail
-self.addEventListener("notificationclick", (event) => {
-  console.log("[Service Worker] Notification clicked:", event);
-
-  event.notification.close();
-
-  if (event.action === "close") {
-    return;
-  }
-
-  const urlToOpen = event.notification.data.url || "/";
-  const storyId = event.notification.data.storyId;
-
-  const promiseChain = clients
-    .matchAll({
-      type: "window",
-      includeUncontrolled: true,
-    })
-    .then((windowClients) => {
-      // Check if window already open
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url.includes(self.location.origin) && "focus" in client) {
-          return client.focus().then((client) => {
-            // Navigate to story detail if storyId exists
-            if (storyId) {
-              return client.navigate(`/#/detail/${storyId}`);
-            }
-            return client.navigate(urlToOpen);
-          });
-        }
-      }
-
-      // Open new window
-      const fullUrl = storyId
-        ? `${self.location.origin}/#/detail/${storyId}`
-        : `${self.location.origin}${urlToOpen}`;
-
-      return clients.openWindow(fullUrl);
-    });
-
-  event.waitUntil(promiseChain);
-});
-
 // Background Sync
 self.addEventListener("sync", (event) => {
-  console.log("[Service Worker] Background sync:", event.tag);
+  console.log("[Service Worker] Sync event:", event.tag);
 
   if (event.tag === "sync-stories") {
     event.waitUntil(syncStories());
   }
 });
 
+// Push Notification
+self.addEventListener("push", (event) => {
+  console.log("[Service Worker] Push received:", event);
+
+  const options = {
+    body: event.data
+      ? event.data.text()
+      : "Ada story baru! Klik untuk melihat.",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-96x96.png",
+    vibrate: [200, 100, 200],
+    data: {
+      url: "/#/home",
+    },
+    actions: [
+      {
+        action: "open",
+        title: "Lihat Story",
+      },
+      {
+        action: "close",
+        title: "Tutup",
+      },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification("Story Map - Story Baru!", options)
+  );
+});
+
+// Notification Click
+self.addEventListener("notificationclick", (event) => {
+  console.log("[Service Worker] Notification clicked:", event);
+
+  event.notification.close();
+
+  if (event.action === "open") {
+    event.waitUntil(
+      clients.openWindow(event.notification.data.url || "/#/home")
+    );
+  }
+});
+
+// Background Sync Helper
 async function syncStories() {
   try {
-    // Get pending stories from IndexedDB
     const db = await openDB();
     const tx = db.transaction("pending-stories", "readonly");
     const store = tx.objectStore("pending-stories");
@@ -228,7 +184,6 @@ async function syncStories() {
 
     console.log("[Service Worker] Syncing stories:", pendingStories.length);
 
-    // Send each pending story to API
     for (const story of pendingStories) {
       try {
         const formData = new FormData();
@@ -249,18 +204,10 @@ async function syncStories() {
         );
 
         if (response.ok) {
-          // Remove from pending stories
           const deleteTx = db.transaction("pending-stories", "readwrite");
           const deleteStore = deleteTx.objectStore("pending-stories");
           await deleteStore.delete(story.id);
-
           console.log("[Service Worker] Story synced:", story.id);
-
-          // Show success notification
-          self.registration.showNotification("Story Synced", {
-            body: "Your offline story has been posted successfully!",
-            icon: "/icons/icon-192x192.png",
-          });
         }
       } catch (error) {
         console.error("[Service Worker] Error syncing story:", error);
@@ -271,6 +218,7 @@ async function syncStories() {
   }
 }
 
+// IndexedDB Helper
 function openDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open("story-map-db", 1);

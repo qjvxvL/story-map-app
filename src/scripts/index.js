@@ -20,63 +20,54 @@ DBHelper.openDB().catch((error) => {
 // Enable keyboard navigation
 KeyboardHelper.enableKeyboardNavigation();
 
-// Initialize Service Worker
+// ✅ CRITICAL FIX: Register service worker dengan path yang benar
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register(
-        "/service-worker.js",
-        {
-          scope: "/",
-        }
-      );
-      console.log("Service Worker registered:", registration.scope);
+      // ✅ Path harus /sw.js (di root, bukan /service-worker.js)
+      const registration = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
+      });
+
+      console.log("✅ Service Worker registered:", registration.scope);
 
       // Initialize push notifications if already granted
-      await NotificationHelper.init();
+      if (Notification.permission === "granted") {
+        await NotificationHelper.subscribeToPushNotifications();
+      }
 
       // Listen for service worker updates
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
-        console.log("New service worker found");
+        console.log("🔄 New service worker found");
 
         newWorker.addEventListener("statechange", () => {
-          if (newWorker.state === "activated") {
-            console.log("New service worker activated");
-            // Optionally show update notification
-            if (
-              confirm("Update tersedia! Refresh halaman untuk update aplikasi?")
-            ) {
+          if (
+            newWorker.state === "installed" &&
+            navigator.serviceWorker.controller
+          ) {
+            console.log("📦 New content available! Refresh to update.");
+
+            if (confirm("Update tersedia! Refresh halaman untuk update?")) {
               window.location.reload();
             }
           }
         });
       });
     } catch (error) {
-      console.error("Service Worker registration failed:", error);
+      console.error("❌ Service Worker registration failed:", error);
     }
   });
 }
 
-// Handle online/offline events
-window.addEventListener("online", async () => {
+// Online/Offline Detection
+window.addEventListener("online", () => {
   console.log("Back online!");
-
-  // Sync pending stories
-  if ("serviceWorker" in navigator && "SyncManager" in window) {
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      await registration.sync.register("sync-stories");
-      console.log("Sync registered after coming online");
-    } catch (error) {
-      console.error("Error registering sync:", error);
-    }
-  }
 
   // Show notification
   if (Notification.permission === "granted") {
-    new Notification("Kembali Online!", {
-      body: "Koneksi internet telah tersambung kembali",
+    new Notification("Online Mode", {
+      body: "Koneksi internet kembali. Sinkronisasi data...",
       icon: "/icons/icon-192x192.png",
     });
   }
@@ -106,11 +97,11 @@ window.addEventListener("DOMContentLoaded", () => {
   app.renderPage();
 });
 
-// Handle before install prompt (PWA install)
+// ✅ PWA Install Prompt
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", (e) => {
-  console.log("Before install prompt fired");
+  console.log("📱 Before install prompt fired");
   e.preventDefault();
   deferredPrompt = e;
 
@@ -119,7 +110,7 @@ window.addEventListener("beforeinstallprompt", (e) => {
 });
 
 window.addEventListener("appinstalled", () => {
-  console.log("PWA was installed");
+  console.log("✅ PWA installed successfully");
   deferredPrompt = null;
 
   // Hide install promotion
@@ -135,10 +126,7 @@ window.addEventListener("appinstalled", () => {
 });
 
 function showInstallPromotion() {
-  // You can create a custom install banner here
-  console.log("Show install promotion");
-
-  // Example: Create simple install banner
+  // Create install banner
   const banner = document.createElement("div");
   banner.id = "install-banner";
   banner.className = "install-banner";
@@ -177,3 +165,6 @@ function hideInstallPromotion() {
     banner.remove();
   }
 }
+
+// Initialize app
+app.initializeApp();

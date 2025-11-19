@@ -1,58 +1,22 @@
 import AuthRepository from "../../data/auth-repository.js";
-import PushNotificationHelper from "../../utils/push-notification-helper.js";
+import NotificationHelper from "../../utils/notification-helper.js";
 
 class Navbar {
   static render() {
     const isLoggedIn = AuthRepository.isLoggedIn();
+    const username = AuthRepository.getUsername();
 
-    return `
-      <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div class="navbar-container">
-          <a href="#/home" class="navbar-brand">
-            <span class="brand-icon">📖</span>
-            <span class="brand-text">Story Map</span>
-          </a>
-          
-          ${
-            isLoggedIn
-              ? `
-            <div class="navbar-menu">
-              <a href="#/home" class="nav-link" aria-label="Home">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-text">Home</span>
-              </a>
-              <a href="#/add" class="nav-link" aria-label="Add Story">
-                <span class="nav-icon">➕</span>
-                <span class="nav-text">Add Story</span>
-              </a>
-              <a href="#/favorites" class="nav-link" aria-label="Favorites">
-                <span class="nav-icon">⭐</span>
-                <span class="nav-text">Favorites</span>
-              </a>
-              
-              <!-- Notification Toggle -->
-              <div class="nav-settings">
-                <button 
-                  id="notification-toggle" 
-                  class="notification-btn ${
-                    PushNotificationHelper.isSubscribed() ? "active" : ""
-                  }" 
-                  aria-label="Toggle push notifications"
-                  title="Toggle push notifications">
-                  <span class="notification-icon">🔔</span>
-                  <span class="notification-status" id="notification-status">
-                    ${PushNotificationHelper.isSubscribed() ? "On" : "Off"}
-                  </span>
-                </button>
-              </div>
+    console.log("🔍 Navbar render:", { isLoggedIn, username });
 
-              <button id="logout-btn" class="logout-btn" aria-label="Logout">
-                <span class="logout-icon">🚪</span>
-                <span class="logout-text">Logout</span>
-              </button>
-            </div>
-          `
-              : `
+    if (!isLoggedIn) {
+      return `
+        <nav class="navbar" role="navigation" aria-label="Main navigation">
+          <div class="navbar-container">
+            <a href="#/home" class="navbar-brand">
+              <span class="brand-icon">📖</span>
+              <span class="brand-text">Story Map</span>
+            </a>
+            
             <div class="navbar-menu">
               <a href="#/login" class="nav-link" aria-label="Login">
                 <span class="nav-icon">🔐</span>
@@ -63,39 +27,114 @@ class Navbar {
                 <span class="nav-text">Register</span>
               </a>
             </div>
-          `
-          }
+          </div>
+        </nav>
+      `;
+    }
+
+    return `
+      <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="navbar-container">
+          <a href="#/home" class="navbar-brand">
+            <span class="brand-icon">📖</span>
+            <span class="brand-text">Story Map</span>
+          </a>
+          
+          <div class="navbar-menu">
+            <a href="#/home" class="nav-link" aria-label="Home">
+              <span class="nav-icon">🏠</span>
+              <span class="nav-text">Home</span>
+            </a>
+            <a href="#/add" class="nav-link" aria-label="Add Story">
+              <span class="nav-icon">➕</span>
+              <span class="nav-text">Add Story</span>
+            </a>
+            <a href="#/favorites" class="nav-link" aria-label="Favorites">
+              <span class="nav-icon">⭐</span>
+              <span class="nav-text">Favorites</span>
+            </a>
+            
+            <div class="nav-settings">
+              <button 
+                id="notification-btn" 
+                class="notification-btn" 
+                aria-label="Toggle notifications"
+                title="Aktifkan/Nonaktifkan Notifikasi"
+              >
+                <span class="notification-icon">🔔</span>
+                <span class="notification-status" id="notification-status">Off</span>
+              </button>
+            </div>
+            
+            <div class="navbar-user">
+              <span class="username">👤 ${username || "User"}</span>
+              <button id="logout-btn" class="btn-logout" aria-label="Logout">
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       </nav>
     `;
   }
 
-  static async afterRender() {
-    const logoutBtn = document.querySelector("#logout-btn");
-    const notificationToggle = document.querySelector("#notification-toggle");
+  static afterRender() {
+    this._setupLogout();
+    this._updateNotificationStatus();
+    this._setupNotificationToggle();
+  }
 
-    // Logout handler
+  static _setupLogout() {
+    const logoutBtn = document.querySelector("#logout-btn");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
-        AuthRepository.clearAuth();
-        window.location.hash = "#/login";
+        if (confirm("Apakah Anda yakin ingin logout?")) {
+          AuthRepository.logout();
+          window.location.hash = "#/login";
+          window.location.reload();
+        }
       });
     }
+  }
 
-    // Notification toggle handler
-    if (notificationToggle) {
-      notificationToggle.addEventListener("click", async () => {
-        await this._toggleNotifications();
-      });
+  static async _updateNotificationStatus() {
+    const statusEl = document.querySelector("#notification-status");
+    const notificationBtn = document.querySelector("#notification-btn");
+
+    if (!statusEl || !notificationBtn) return;
+
+    try {
+      const isSubscribed = await NotificationHelper.isSubscribed();
+      statusEl.textContent = isSubscribed ? "On" : "Off";
+
+      if (isSubscribed) {
+        notificationBtn.classList.add("active");
+      } else {
+        notificationBtn.classList.remove("active");
+      }
+
+      console.log(
+        "✅ Notification status updated:",
+        isSubscribed ? "On" : "Off"
+      );
+    } catch (error) {
+      console.error("❌ Error checking notification status:", error);
+      statusEl.textContent = "Off";
     }
+  }
 
-    // Highlight active link
-    this._highlightActiveLink();
+  static _setupNotificationToggle() {
+    const notificationBtn = document.querySelector("#notification-btn");
+    if (!notificationBtn) return;
+
+    notificationBtn.addEventListener("click", () => {
+      this._toggleNotifications();
+    });
   }
 
   static async _toggleNotifications() {
     const statusEl = document.querySelector("#notification-status");
-    const notificationBtn = document.querySelector("#notification-toggle");
+    const notificationBtn = document.querySelector("#notification-btn");
 
     if (!statusEl || !notificationBtn) return;
 
@@ -103,58 +142,45 @@ class Navbar {
       notificationBtn.disabled = true;
       statusEl.textContent = "...";
 
-      const isSubscribed = PushNotificationHelper.isSubscribed();
-      const token = AuthRepository.getToken();
+      const isSubscribed = await NotificationHelper.isSubscribed();
 
       if (isSubscribed) {
         // Unsubscribe
-        const success = await PushNotificationHelper.unsubscribe(token);
+        console.log("🔕 Unsubscribing from notifications...");
+        const success =
+          await NotificationHelper.unsubscribeFromPushNotifications();
+
         if (success) {
           statusEl.textContent = "Off";
           notificationBtn.classList.remove("active");
           alert("Notifikasi berhasil dinonaktifkan");
+        } else {
+          throw new Error("Failed to unsubscribe");
         }
       } else {
         // Subscribe
-        const permission = await PushNotificationHelper.requestPermission();
-        if (permission === "granted") {
-          const success = await PushNotificationHelper.subscribe(token);
-          if (success) {
-            statusEl.textContent = "On";
-            notificationBtn.classList.add("active");
-            alert("Notifikasi berhasil diaktifkan!");
-          }
+        console.log("🔔 Subscribing to notifications...");
+        const permission = await NotificationHelper.requestPermission();
+
+        if (permission) {
+          statusEl.textContent = "On";
+          notificationBtn.classList.add("active");
+          alert("Notifikasi berhasil diaktifkan!");
         } else {
           alert("Izin notifikasi ditolak. Aktifkan di pengaturan browser.");
           statusEl.textContent = "Off";
         }
       }
     } catch (error) {
-      console.error("Error toggling notifications:", error);
+      console.error("❌ Error toggling notifications:", error);
       alert("Terjadi kesalahan saat mengubah pengaturan notifikasi");
-      statusEl.textContent = PushNotificationHelper.isSubscribed()
-        ? "On"
-        : "Off";
+
+      // Reset to current state
+      const isSubscribed = await NotificationHelper.isSubscribed();
+      statusEl.textContent = isSubscribed ? "On" : "Off";
     } finally {
       notificationBtn.disabled = false;
     }
-  }
-
-  static _highlightActiveLink() {
-    const currentHash = window.location.hash;
-    const navLinks = document.querySelectorAll(".nav-link");
-
-    navLinks.forEach((link) => {
-      link.classList.remove("active");
-      const href = link.getAttribute("href");
-
-      if (
-        (currentHash === "" && href === "#/home") ||
-        (currentHash && currentHash.startsWith(href))
-      ) {
-        link.classList.add("active");
-      }
-    });
   }
 }
 
